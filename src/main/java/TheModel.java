@@ -1,6 +1,11 @@
+import javax.swing.table.DefaultTableModel;
 import java.sql.*;
+import java.util.Vector;
 
-public class MySQL {
+import static java.lang.Class.forName;
+
+public class TheModel {
+
     // JDBC driver name and database URL
     static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
     static final String DB_URL = "jdbc:mysql://localhost:3306/example";
@@ -9,12 +14,45 @@ public class MySQL {
     static final String USERNAME = "babyboomer";
     static final String PASSWORD = "Tl8L2^7GwIoo";
 
-    public static void main(String[] arguments) {
-        Connection connection = null;
-        Statement statement = null;
+    private static Connection connection = null;
+    private static Statement statement = null;
+
+    public DefaultTableModel getDefaultTableModel() {
+        return defaultTableModel;
+    }
+
+    public void setDefaultTableModel(DefaultTableModel defaultTableModel) throws SQLException {
+        this.defaultTableModel = buildTableModel(getResultSet("SELECT * FROM Movies"));
+    }
+
+    private DefaultTableModel defaultTableModel;
+
+    public static String getInsertString() {
+        return insertString;
+    }
+
+    public static String getDeleteString() {
+        return deleteString;
+    }
+
+    private static final String insertString = "INSERT INTO Movies VALUES (?,?,?,?,?,?)";
+
+    private static final String deleteString = "DELETE FROM movies WHERE " +
+            "Ranking = ? AND " +
+            "Title = ? AND " +
+            "Released = ? AND " +
+            "Actor = ? AND " +
+            "Director = ? AND " +
+            "Rating = ?";
+
+    public TheModel() {
+        super();
+    }
+
+    public Connection createDatabase() {
         try {
             //STEP 2: Register JDBC driver
-            //Class.forName(JDBC_DRIVER);
+            //forName(JDBC_DRIVER);
 
             //STEP 3: Open a connection
             System.out.println("Connecting to database...");
@@ -23,23 +61,24 @@ public class MySQL {
             //STEP 4: Execute a query
             System.out.println("Creating statement...");
             statement = connection.createStatement();
-            String sql;
+            String headings, data;
             boolean status;
             ResultSet resultSet;
-            sql = "CREATE TABLE IF NOT EXISTS movies (Ranking INTEGER PRIMARY KEY, Title VARCHAR(255), Released " +
+            //status = statement.execute("DROP IGNORE TABLE Movies");
+            headings = "CREATE TABLE IF NOT EXISTS Movies (Ranking INTEGER PRIMARY KEY, Title VARCHAR(255), Released " +
                     "INTEGER, Actor " +
-                    "VARCHAR(255), Director VARCHAR(255), Rating DECIMAL(3,1))";
-            status = statement.execute(sql);
-            sql = "INSERT IGNORE INTO movies (Ranking, Title, Released, Actor, Director, Rating) VALUES " +
+                    "VARCHAR(255), Director VARCHAR(255), Rating DECIMAL(4,1))";
+            status = statement.execute(headings);
+            data = "INSERT INTO Movies (Ranking, Title, Released, Actor, Director, Rating) VALUES " +
                     "(1,'CITIZEN KANE',1941,'Orson Welles','Orson Welles',8.3)," +
                     "(2,'CASABLANCA',1942,'Humphrey Bogart','Michael Curtiz',8.5)," +
                     "(3,'GODFATHER, THE',1972,'Marlon Brando','Francis Ford Coppola',9.2)," +
                     "(4,'GONE WITH THE WIND',1939,'Clark Gable','Victor Fleming',8.1)," +
                     "(5,'LAWRENCE OF ARABIA',1962,'Peter O'' Toole','David Lean', 8.3)," +
-                    "(6,'WIZARD OF OZ, THE',1939,'Judy Garland',' Victor Fleming',8.1)," +
+                    "(6,'WIZARD OF OZ, THE',1939,'Judy Garland','Victor Fleming',8.1)," +
                     "(7,'GRADUATE, THE',1967,'Dustin Hoffman','Mike Nichols', 8.0)," +
                     "(8,'ON THE WATERFRONT',1954,'Marlon Brando','Elia Kazan', 8.1)," +
-                    "(9,'SCHINDLER''S LIST',1993,' Liam Neeson',' Steven Spielberg', 8.9)," +
+                    "(9,'SCHINDLER''S LIST',1993,'Liam Neeson','Steven Spielberg', 8.9)," +
                     "(10,'SINGIN'' IN THE RAIN',1952,'Gene Kelly','Stanley Donen',8.3)," +
                     "(11,'IT''S A WONDERFUL LIFE',1946,'James Stewart','Frank Capra',8.6)," +
                     "(12,'SUNSET BOULEVARD',1950,'William Holden','Billy Wilder', 8.4)," +
@@ -49,11 +88,11 @@ public class MySQL {
                     "(16,'ALL ABOUT EVE',1950,'Bette Davis','Joseph L Mankiewicz', 8.2)," +
                     "(17,'AFRICAN QUEEN, THE',1951,'Humphrey Bogart','John Huston', 7.7)," +
                     "(18,'PSYCHO',1960,'Anthony Perkins','Alfred Hitchcock', 8.1)," +
-                    "(19,'CHINATOWN',1974,' Jack Nicholson',' Roman Polanski', 8.1)," +
+                    "(19,'CHINATOWN',1974,'Jack Nicholson','Roman Polanski', 8.1)," +
                     "(20,'ONE FLEW OVER THE CUCKOO''S NEST',1975,'Jack Nicholson','Milos Forman', 8.7)," +
                     "(21,'GRAPES OF WRATH, THE',1940,'Henry Fonda','John Ford', 8.0)," +
                     "(22,'2001: A SPACE ODYSSEY',1968,'Keir Dullea','Stanley Kubrick', 8.3)," +
-                    "(23,'MALTESE FALCON, THE',1941,' Humphrey Bogart',' John Huston', 8.0)," +
+                    "(23,'MALTESE FALCON, THE',1941,'Humphrey Bogart','John Huston', 8.0)," +
                     "(24,'RAGING BULL',1980,'Robert De Niro','Martin Scorsese', 8.2)," +
                     "(25,'E.T. THE EXTRA-TERRESTRIAL',1982,'Henry Thomas','Steven Spielberg', 7.8)," +
                     "(26,'DR. STRANGELOVE',1964,'Peter Sellers','Stanley Kubrick', 8.4)," +
@@ -63,7 +102,7 @@ public class MySQL {
                     "(30,'TREASURE OF THE SIERRA MADRE, THE',1948,'Humphrey Bogart','John Huston', 8.2)," +
                     "(31,'ANNIE HALL',1977,'Woody Allen','Woody Allen', 8.0)," +
                     "(32,'GODFATHER PART II, THE',1974,'Al Pacino','Francis Ford Coppola', 9.0)," +
-                    "(33,'HIGH NOON',1952,' Gary Cooper',' Fred Zinnermann', 7.9)," +
+                    "(33,'HIGH NOON',1952,'Gary Cooper','Fred Zinnermann', 7.9)," +
                     "(34,'TO KILL A MOCKINGBIRD',1962,'Gregory Peck','Robert Mulligan', 8.2)," +
                     "(35,'IT HAPPENED ONE NIGHT',1934,'Clark Gable','Frank Capra', 8.1)," +
                     "(36,'MIDNIGHT COWBOY',1969,'Dustin Hoffman','John Schlesinger', 7.8)," +
@@ -82,7 +121,7 @@ public class MySQL {
                     "(49,'SNOW WHITE & THE SEVEN DWARFS',1937,'Adriana Caselotti','William Cottrell', 7.6)," +
                     "(50,'BUTCH CASSIDY & THE SUNDANCE KID',1969,'Paul Newman','George Roy Hill', 8.0)," +
                     "(51,'PHILADELPHIA STORY, THE',1940,'Cary Grant','George Cukor', 7.9)," +
-                    "(52,'FROM HERE TO ETERNITY',1953,' Burt Lancaster',' Fred Zinnermann', 7.6)," +
+                    "(52,'FROM HERE TO ETERNITY',1953,'Burt Lancaster','Fred Zinnermann', 7.6)," +
                     "(53,'AMADEUS',1984,'F Murray Abraham','Milos Forman', 8.3)," +
                     "(54,'ALL QUIET ON THE WESTERN FRONT',1930,'Lew Ayers','Lewis Milestone', 8.0)," +
                     "(55,'SOUND OF MUSIC, THE',1965,'Julie Andrews','Robert Wise', 8.0)," +
@@ -132,42 +171,16 @@ public class MySQL {
                     "(99,'GUESS WHO''S COMING TO DINNER',1967,'Spencer Tracy','Stanley Kramer', 7.8)," +
                     "(100,'YANKEE DOODLE DANDY',1942,'James Cagney','Michael Curtiz', 7.7)";
 
-            status = statement.execute(sql);
-            sql = "SELECT Ranking, Title, Released, Actor, Director, Rating  FROM movies";
+            status = statement.execute(data);
+            status = statement.execute("SET autocommit = 0");
+            String sql = "SELECT Ranking, Title, Released, Actor, Director, Rating  FROM Movies";
 
             resultSet = statement.executeQuery(sql);
 
-            // Prepared Statement stuff
-            String updateString = "SELECT * FROM movies WHERE Actor LIKE ? ORDER BY ? ASC";
-
-            PreparedStatement updateTable = connection.prepareStatement(updateString);
-            updateTable.setString(1,"%Robert%");
-            updateTable.setString(2,"Ranking");
-            resultSet = updateTable.executeQuery();
-
-            //STEP 5: Extract data from result set
-            while (resultSet.next()) {
-                //Retrieve by column name
-                int ranking = resultSet.getInt("Ranking");
-                String title = resultSet.getString("Title");
-                int released = resultSet.getInt("Released");
-                String actor = resultSet.getString("Actor");
-                String director = resultSet.getString("Director");
-                double rating = resultSet.getDouble("Rating");
-
-                //Display values
-                System.out.print("Ranking: " + ranking);
-                System.out.print(", Title: " + title);
-                System.out.print(", Released: " + released);
-                System.out.print(", Actor: " + actor);
-                System.out.print(", Director: " + director);
-                System.out.print(", Rating: " + rating);
-                System.out.println();
-            }
             //STEP 6: Clean-up environment
             resultSet.close();
             statement.close();
-            connection.close();
+            //connection.close();
         } catch (SQLException sqlException) {
             //Handle errors for JDBC
             sqlException.printStackTrace();
@@ -181,13 +194,34 @@ public class MySQL {
                     statement.close();
             } catch (SQLException se2) {
             }// nothing we can do
-            try {
-                if (connection != null)
-                    connection.close();
-            } catch (SQLException se) {
-                se.printStackTrace();
-            }//end finally try
+            return connection;
         }//end try
-        System.out.println("Goodbye!");
-    }//end main
-}//end MySQL
+
+    }
+
+    public static ResultSet getResultSet(String sql) throws SQLException {
+        connection = DriverManager.getConnection(DB_URL, USERNAME, PASSWORD);
+        statement = connection.createStatement();
+        statement.execute(sql);
+        return statement.getResultSet();
+    }
+
+    public static DefaultTableModel buildTableModel(ResultSet resultSet) throws SQLException {
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        Vector<String> columnNames = new Vector<String>();
+        int columnCount = metaData.getColumnCount();
+        for (int column = 1; column <= columnCount; column++) {
+            columnNames.add(metaData.getColumnName(column));
+        }
+        Vector<Vector<Object>> data = new Vector<Vector<Object>>();
+        while (resultSet.next()) {
+            Vector<Object> vector = new Vector<Object>();
+            for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
+                vector.add(resultSet.getObject(columnIndex));
+            }
+            data.add(vector);
+        }
+        return new DefaultTableModel(data, columnNames);
+    }
+
+}
